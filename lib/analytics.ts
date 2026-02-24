@@ -17,12 +17,9 @@ export function track(event: FunnelEvent, props?: Record<string, string | number
   if (typeof window === 'undefined') return;
   try {
     const payload = { event, ...props };
-    if (typeof (window as { va?: (a: string, b: string, c?: Record<string, unknown>) => void }).va === 'function') {
-      (window as { va: (a: string, b: string, c?: Record<string, unknown>) => void }).va(
-        'event',
-        event,
-        props as Record<string, unknown> | undefined
-      );
+    const va = (window as unknown as { va?: (a: string, b: string, c?: Record<string, unknown>) => void }).va;
+    if (typeof va === 'function') {
+      va('event', event, props as Record<string, unknown> | undefined);
     }
     if (process.env.NODE_ENV === 'development') {
       console.debug('[analytics]', payload);
