@@ -209,7 +209,7 @@ export function DocumentsTable({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card">
+    <div className="rounded-2xl border border-border bg-card shadow-[var(--card-shadow)]">
         <div className="p-6 pb-4">
           <h2 className="text-base font-semibold text-foreground">
             Your Documents

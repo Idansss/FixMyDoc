@@ -89,7 +89,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Dashboard
         </h1>
@@ -98,11 +98,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <UsageCard />
-      </div>
-
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <StatCard
           icon={<FileText className="h-4 w-4 text-primary" />}
           label="Total Documents"
@@ -125,12 +122,12 @@ export default function DashboardPage() {
       </div>
 
       {historyLoading ? (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card p-12">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-card p-12 shadow-[var(--card-shadow)]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Loading your documents…</p>
         </div>
       ) : historyError ? (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card p-12">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-card p-12 shadow-[var(--card-shadow)]">
           <p className="text-sm text-muted-foreground">Could not load documents.</p>
           <Button variant="outline" size="sm" onClick={loadHistory}>
             Try again
@@ -157,16 +154,16 @@ function StatCard({
   value: string | null
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--card-shadow)]">
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
           {icon}
         </div>
-        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
       </div>
       <p className="mt-3 text-2xl font-bold tabular-nums text-foreground">
         {value === null ? (
-          <span className="inline-block h-6 w-10 animate-pulse rounded bg-secondary" />
+          <span className="inline-block h-7 w-12 animate-pulse rounded-lg bg-muted" />
         ) : (
           value
         )}

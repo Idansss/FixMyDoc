@@ -103,7 +103,7 @@ export default function BillingPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Billing
         </h1>
@@ -112,8 +112,8 @@ export default function BillingPage() {
         </p>
       </div>
 
-      <div className="max-w-xl space-y-6">
-        <div className="rounded-xl border border-border bg-card p-6">
+      <div className="max-w-2xl space-y-6">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--card-shadow)]">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-foreground">
@@ -189,7 +189,7 @@ export default function BillingPage() {
           )}
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-6">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--card-shadow)]">
           <h2 className="text-base font-semibold text-foreground">
             Payment Details
           </h2>

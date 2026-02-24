@@ -96,9 +96,9 @@ function PlanCard({
 
   return (
     <div
-      className={`relative flex flex-col rounded-xl border p-8 ${
+      className={`relative flex flex-col rounded-2xl border p-8 shadow-[var(--card-shadow)] ${
         plan.highlight
-          ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
+          ? "border-primary bg-primary/5 ring-2 ring-primary/20"
           : "border-border bg-card"
       }`}
     >

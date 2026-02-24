@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { DashboardMobileHeader } from "@/components/dashboard/sidebar"
+import { HelpButton } from "@/components/dashboard/help-button"
 
 const DashboardSidebar = dynamic(
   () => import("@/components/dashboard/sidebar").then((m) => ({ default: m.DashboardSidebar })),
@@ -18,7 +19,8 @@ export default function DashboardLayout({
       <DashboardSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardMobileHeader />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-background">{children}</main>
+        <HelpButton />
       </div>
     </div>
   )

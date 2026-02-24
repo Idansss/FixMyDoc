@@ -109,13 +109,13 @@ export function UploadSection({ onUpload }: { onUpload: (file: File, docType: st
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--card-shadow)]">
       <h2 className="mb-4 text-base font-semibold text-foreground">
         Upload Document
       </h2>
 
       <div
-        className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors ${
+        className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
           dragActive
             ? "border-primary bg-primary/5"
             : "border-border hover:border-muted-foreground/40"
