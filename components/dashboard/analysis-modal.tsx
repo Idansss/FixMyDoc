@@ -185,7 +185,7 @@ export function AnalysisModal({
                   <div className="min-w-0 flex-1">
                     <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Missing / weak keywords</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {analysis.keyword_gap.map((kw) => (
+                      {(analysis.keyword_gap ?? []).map((kw) => (
                         <Badge key={kw} variant="secondary" className="text-xs font-normal">
                           {kw}
                         </Badge>
