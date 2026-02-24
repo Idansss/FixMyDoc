@@ -38,6 +38,12 @@ export type AnalysisData = {
   ats_score?: number
   jd_match?: number
   keyword_gap?: string[]
+  /** JD keywords that appear well in the resume */
+  keyword_matched?: string[]
+  /** CV quality checklist (e.g. quantified achievements, action verbs) */
+  cv_checklist?: { item: string; passed: boolean; tip?: string }[]
+  /** Stronger verb suggestions (original → suggested) */
+  stronger_verbs?: { original: string; suggested: string }[]
 }
 
 const SEVERITY_VARIANT: Record<string, "destructive" | "secondary" | "outline"> = {

@@ -11,7 +11,10 @@ export type FunnelEvent =
   | 'export_success'
   | 'upgrade_click'
   | 'cover_letter_generate'
-  | 'cover_letter_export';
+  | 'cover_letter_export'
+  | 'interview_prep_generate'
+  | 'linkedin_optimize'
+  | 'cover_letter_save';
 
 export function track(event: FunnelEvent, props?: Record<string, string | number | boolean>) {
   if (typeof window === 'undefined') return;

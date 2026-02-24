@@ -25,6 +25,9 @@ export interface AnalysisResult {
   ats_score?: number;
   jd_match?: number;
   keyword_gap?: string[];
+  keyword_matched?: string[];
+  cv_checklist?: { item: string; passed: boolean; tip?: string }[];
+  stronger_verbs?: { original: string; suggested: string }[];
 }
 
 function isToday(isoDate: string | null): boolean {
@@ -173,6 +176,9 @@ export async function POST(req: NextRequest) {
       ...(parsed.ats_score != null && { ats_score: parsed.ats_score }),
       ...(parsed.jd_match != null && { jd_match: parsed.jd_match }),
       ...(parsed.keyword_gap != null && { keyword_gap: parsed.keyword_gap }),
+      ...(parsed.keyword_matched != null && { keyword_matched: parsed.keyword_matched }),
+      ...(parsed.cv_checklist != null && { cv_checklist: parsed.cv_checklist }),
+      ...(parsed.stronger_verbs != null && { stronger_verbs: parsed.stronger_verbs }),
     };
     const { data: rewriteRow, error: rewriteError } = await supabaseServer
       .from('rewrites')
@@ -223,6 +229,9 @@ export async function POST(req: NextRequest) {
       ...(parsed.ats_score != null && { ats_score: parsed.ats_score }),
       ...(parsed.jd_match != null && { jd_match: parsed.jd_match }),
       ...(parsed.keyword_gap != null && { keyword_gap: parsed.keyword_gap }),
+      ...(parsed.keyword_matched != null && { keyword_matched: parsed.keyword_matched }),
+      ...(parsed.cv_checklist != null && { cv_checklist: parsed.cv_checklist }),
+      ...(parsed.stronger_verbs != null && { stronger_verbs: parsed.stronger_verbs }),
     });
   } catch (err) {
     console.error('Analyze error:', err);

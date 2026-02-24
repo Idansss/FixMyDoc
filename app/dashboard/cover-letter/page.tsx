@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Download, Loader2, Copy, Check } from "lucide-react"
+import { Download, Loader2, Copy, Check, Save } from "lucide-react"
 import { toast } from "sonner"
 import { track } from "@/lib/analytics"
 
@@ -12,6 +12,7 @@ export default function CoverLetterPage() {
   const [coverLetter, setCoverLetter] = useState("")
   const [generating, setGenerating] = useState(false)
   const [exportLoading, setExportLoading] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
   const [branded, setBranded] = useState(true)
   const [copied, setCopied] = useState(false)
 
@@ -43,6 +44,34 @@ export default function CoverLetterPage() {
       toast.error("Failed to generate cover letter.")
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const handleSaveToDocuments = async () => {
+    if (!coverLetter.trim()) return
+    setSaving(true)
+    try {
+      const res = await fetch("/api/cover-letter/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: coverLetter.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || "Failed to save.")
+        return
+      }
+      track("cover_letter_save", {})
+      toast.success("Saved to My Documents.")
+      if (data.documentId) {
+        window.location.href = `/dashboard/documents/${data.documentId}`
+      } else {
+        window.location.href = "/dashboard"
+      }
+    } catch {
+      toast.error("Failed to save.")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -147,10 +176,20 @@ export default function CoverLetterPage() {
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-foreground">Generated cover letter</label>
             {coverLetter && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={handleCopy}>
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   {copied ? "Copied" : "Copy"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1 text-xs"
+                  onClick={handleSaveToDocuments}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  Save to My Documents
                 </Button>
               </div>
             )}

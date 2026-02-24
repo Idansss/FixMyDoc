@@ -7,11 +7,21 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Check,
+  CheckCircle2,
   Download,
+  GitCompare,
   ListChecks,
   Loader2,
   MessageSquareText,
@@ -19,6 +29,7 @@ import {
   Target,
   Trash2,
   X,
+  Zap,
 } from "lucide-react"
 import { toast } from "sonner"
 import { track } from "@/lib/analytics"
@@ -35,6 +46,9 @@ type AnalysisData = {
   ats_score?: number
   jd_match?: number
   keyword_gap?: string[]
+  keyword_matched?: string[]
+  cv_checklist?: { item: string; passed: boolean; tip?: string }[]
+  stronger_verbs?: { original: string; suggested: string }[]
 }
 
 const SEVERITY_VARIANT: Record<string, "destructive" | "secondary" | "outline"> = {
@@ -62,9 +76,13 @@ export default function DocumentDetailPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [exportLoading, setExportLoading] = useState<string | null>(null)
+  const [showCompare, setShowCompare] = useState(false)
+  const [reAnalyzeDialog, setReAnalyzeDialog] = useState(false)
+  const [reAnalyzeJd, setReAnalyzeJd] = useState("")
+  const [reAnalyzing, setReAnalyzing] = useState(false)
   const [data, setData] = useState<{
-    document: { id: string; filename: string; docType: string; score: number | null; date: string }
-    rewrite: { id: string; fixedText?: string } | null
+    document: { id: string; filename: string; docType: string; score: number | null; date: string; extractedText?: string }
+    rewrite: { id: string; fixedText?: string; originalText?: string } | null
     analysis: AnalysisData | null
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -207,6 +225,48 @@ export default function DocumentDetailPage() {
 
   const { document: doc, rewrite, analysis } = data
   const hasFullAnalysis = analysis && (analysis.issues.length > 0 || analysis.rewrites.length > 0)
+  const originalFullText = data.rewrite?.originalText ?? data.analysis?.originalText ?? ""
+  const improvedFullText = effectiveFixedText ?? data.rewrite?.fixedText ?? ""
+
+  const handleReAnalyze = async () => {
+    if (!docId || doc.docType !== "cv") return
+    const extracted = data.document?.extractedText ?? originalFullText
+    if (!extracted) {
+      toast.error("No document text available to re-analyze.")
+      return
+    }
+    setReAnalyzing(true)
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: docId,
+          extractedText: extracted,
+          docType: "cv",
+          jobDescription: reAnalyzeJd.trim() || null,
+        }),
+      })
+      const out = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(out.error || "Re-analysis failed.")
+        return
+      }
+      toast.success("Re-analyzed with new job description.")
+      setReAnalyzeDialog(false)
+      setReAnalyzeJd("")
+      const refetch = await fetch(`/api/documents/${docId}`)
+      if (refetch.ok) {
+        const d = await refetch.json()
+        setData(d)
+        setAccepted((d.analysis?.rewrites ?? []).map(() => true))
+      }
+    } catch {
+      toast.error("Re-analysis failed.")
+    } finally {
+      setReAnalyzing(false)
+    }
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -256,7 +316,14 @@ export default function DocumentDetailPage() {
             </div>
           </div>
 
-          {(analysis.ats_score != null || analysis.jd_match != null || (analysis.keyword_gap?.length ?? 0) > 0) && (
+          {doc.docType === "cv" && (
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setReAnalyzeDialog(true)}>
+                Analyze for another job
+              </Button>
+            </div>
+          )}
+          {(analysis.ats_score != null || analysis.jd_match != null || (analysis.keyword_gap?.length ?? 0) > 0 || (analysis.keyword_matched?.length ?? 0) > 0) && (
             <>
               <Separator />
               <div>
@@ -264,22 +331,36 @@ export default function DocumentDetailPage() {
                   <Target className="h-4 w-4 text-primary" />
                   <h2 className="text-sm font-semibold text-foreground">ATS & job match</h2>
                 </div>
-                <div className="flex flex-wrap gap-4 rounded-lg border border-border bg-card p-4">
-                  {analysis.ats_score != null && (
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">ATS score</p>
-                      <p className="text-lg font-bold tabular-nums text-foreground">{analysis.ats_score}/100</p>
-                    </div>
-                  )}
-                  {analysis.jd_match != null && (
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">JD match</p>
-                      <p className="text-lg font-bold tabular-nums text-foreground">{analysis.jd_match}%</p>
+                <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+                  <div className="flex flex-wrap gap-4">
+                    {analysis.ats_score != null && (
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">ATS score</p>
+                        <p className="text-lg font-bold tabular-nums text-foreground">{analysis.ats_score}/100</p>
+                      </div>
+                    )}
+                    {analysis.jd_match != null && (
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">JD match</p>
+                        <p className="text-lg font-bold tabular-nums text-foreground">{analysis.jd_match}%</p>
+                      </div>
+                    )}
+                  </div>
+                  {(analysis.keyword_matched?.length ?? 0) > 0 && (
+                    <div className="min-w-0">
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Matched keywords (in resume)</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(analysis.keyword_matched ?? []).map((kw) => (
+                          <Badge key={kw} variant="outline" className="border-green-500/50 bg-green-500/10 text-xs font-normal text-green-700 dark:text-green-400">
+                            {kw}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {(analysis.keyword_gap?.length ?? 0) > 0 && (
-                    <div className="min-w-0 flex-1">
-                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Missing / weak keywords</p>
+                    <div className="min-w-0">
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Missing / weak keywords (add these)</p>
                       <div className="flex flex-wrap gap-1.5">
                         {(analysis.keyword_gap ?? []).map((kw) => (
                           <Badge key={kw} variant="secondary" className="text-xs font-normal">
@@ -290,6 +371,59 @@ export default function DocumentDetailPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </>
+          )}
+
+          {(analysis.cv_checklist?.length ?? 0) > 0 && (
+            <>
+              <Separator />
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <ListChecks className="h-4 w-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">CV checklist</h2>
+                </div>
+                <ul className="space-y-2 rounded-lg border border-border bg-card p-3">
+                  {analysis.cv_checklist!.map((c, i) => (
+                    <li key={i} className="flex items-start gap-3 rounded-md py-1.5">
+                      {c.passed ? (
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600 dark:text-green-500" />
+                      ) : (
+                        <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 border-amber-500/60 bg-transparent" />
+                      )}
+                      <div className="min-w-0">
+                        <p className={c.passed ? "text-xs font-medium text-foreground" : "text-xs font-medium text-foreground"}>
+                          {c.item}
+                        </p>
+                        {!c.passed && c.tip && (
+                          <p className="mt-0.5 text-xs text-muted-foreground">{c.tip}</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+
+          {(analysis.stronger_verbs?.length ?? 0) > 0 && (
+            <>
+              <Separator />
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">Stronger verbs</h2>
+                </div>
+                <p className="mb-2 text-xs text-muted-foreground">Replace weak phrasing with more impactful language:</p>
+                <ul className="space-y-2 rounded-lg border border-border bg-card p-3">
+                  {(analysis.stronger_verbs ?? []).map((v, i) => (
+                    <li key={i} className="flex flex-wrap items-center gap-2 text-xs">
+                      <span className="rounded bg-muted/80 px-2 py-0.5 font-medium text-muted-foreground line-through">{v.original}</span>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="rounded bg-primary/10 px-2 py-0.5 font-medium text-primary">{v.suggested}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </>
           )}
@@ -420,6 +554,46 @@ export default function DocumentDetailPage() {
                 <p className="mt-2 text-xs text-muted-foreground">
                   Export uses your choices above. Default: all improved.
                 </p>
+                <div className="mt-3">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowCompare((v) => !v)}>
+                    <GitCompare className="h-3.5 w-3.5" />
+                    {showCompare ? "Hide" : "Show"} full compare
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {showCompare && (originalFullText || improvedFullText) && (
+            <>
+              <Separator />
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <GitCompare className="h-4 w-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">Compare: original vs improved</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-xl border border-border overflow-hidden">
+                  <div className="flex flex-col min-h-[280px] bg-muted/30">
+                    <div className="px-3 py-2 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Original
+                    </div>
+                    <div className="flex-1 overflow-auto p-4">
+                      <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-foreground">
+                        {originalFullText || "(no text)"}
+                      </pre>
+                    </div>
+                  </div>
+                  <div className="flex flex-col min-h-[280px] bg-primary/5">
+                    <div className="px-3 py-2 border-b border-border text-xs font-semibold text-primary/80 uppercase tracking-wide">
+                      Improved
+                    </div>
+                    <div className="flex-1 overflow-auto p-4">
+                      <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-foreground">
+                        {improvedFullText || "(no text)"}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -488,6 +662,44 @@ export default function DocumentDetailPage() {
               </div>
             </>
           )}
+
+          <Dialog open={reAnalyzeDialog} onOpenChange={setReAnalyzeDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Analyze for another job</DialogTitle>
+                <DialogDescription>
+                  Paste a different job description to get a new ATS score, JD match %, and keyword gap. This will create a new analysis and keep the previous one in history.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <label htmlFor="reanalyze-jd" className="text-sm font-medium text-foreground">
+                  Job description
+                </label>
+                <textarea
+                  id="reanalyze-jd"
+                  placeholder="Paste the job posting here…"
+                  value={reAnalyzeJd}
+                  onChange={(e) => setReAnalyzeJd(e.target.value)}
+                  className="min-h-[120px] w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setReAnalyzeDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleReAnalyze} disabled={reAnalyzing}>
+                  {reAnalyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing…
+                    </>
+                  ) : (
+                    "Re-analyze"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { UploadSection } from "@/components/dashboard/upload-section"
 import {
   DocumentsTable,
@@ -8,8 +8,18 @@ import {
 } from "@/components/dashboard/documents-table"
 import type { AnalysisData } from "@/components/dashboard/analysis-modal"
 import { Button } from "@/components/ui/button"
-import { FileText, TrendingUp, CheckCircle, Loader2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { FileText, TrendingUp, CheckCircle, Loader2, Search, ChevronDown } from "lucide-react"
 import { UsageCard } from "@/components/dashboard/usage-card"
+import { ScoreHistoryChart } from "@/components/dashboard/score-history-chart"
+import { OnboardingModal } from "@/components/dashboard/onboarding-modal"
 
 export default function DashboardPage() {
   const [documents, setDocuments] = useState<Document[]>([])
@@ -36,17 +46,19 @@ export default function DashboardPage() {
   }, [loadHistory])
 
   const handleUpload = (file: File, docType: string, documentId: string, extractedText: string) => {
+    const now = new Date()
     const newDoc: Document = {
       id: documentId,
       filename: file.name,
       docType,
       score: null,
       status: "uploaded",
-      date: new Date().toLocaleDateString("en-US", {
+      date: now.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
       }),
+      createdAt: now.toISOString(),
       extractedText,
     }
     setDocuments((prev) => {
@@ -77,6 +89,30 @@ export default function DashboardPage() {
     setDocuments((prev) => prev.filter((d) => d.id !== docId))
   }
 
+  const [search, setSearch] = useState("")
+  const [filterType, setFilterType] = useState<string>("all")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+
+  const filteredDocuments = useMemo(() => {
+    let list = documents
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      list = list.filter((d) => d.filename.toLowerCase().includes(q))
+    }
+    if (filterType && filterType !== "all") {
+      list = list.filter((d) => d.docType === filterType)
+    }
+    if (dateFrom) {
+      list = list.filter((d) => d.createdAt && d.createdAt >= dateFrom)
+    }
+    if (dateTo) {
+      const end = dateTo + "T23:59:59.999Z"
+      list = list.filter((d) => d.createdAt && d.createdAt <= end)
+    }
+    return list
+  }, [documents, search, filterType, dateFrom, dateTo])
+
   const analyzedCount = documents.filter((d) => d.status === "analyzed").length
   const avgScore =
     analyzedCount > 0
@@ -87,8 +123,12 @@ export default function DashboardPage() {
         )
       : 0
 
+  const showUploadHint = !historyLoading && documents.length === 0
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      <OnboardingModal hasDocuments={!historyLoading && documents.length > 0} />
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Dashboard
@@ -117,8 +157,22 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="mb-8">
-        <UploadSection onUpload={handleUpload} />
+      {!historyLoading && (
+        <div className="mb-8">
+          <ScoreHistoryChart documents={documents} />
+        </div>
+      )}
+
+      <div className="relative mb-8">
+        {showUploadHint && (
+          <div className="absolute -top-9 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-lg">
+            Start here — upload your first document
+            <ChevronDown className="h-3.5 w-3.5" />
+          </div>
+        )}
+        <div className={showUploadHint ? "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-2xl" : ""}>
+          <UploadSection onUpload={handleUpload} />
+        </div>
       </div>
 
       {historyLoading ? (
@@ -134,11 +188,65 @@ export default function DashboardPage() {
           </Button>
         </div>
       ) : (
-        <DocumentsTable
-          documents={documents}
-          onAnalyzeComplete={handleAnalyzeComplete}
-          onDelete={handleDelete}
-        />
+        <>
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-[var(--card-shadow)]">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by filename…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="cv">CV</SelectItem>
+                <SelectItem value="legal">Legal</SelectItem>
+                <SelectItem value="academic">Academic</SelectItem>
+                <SelectItem value="business">Business</SelectItem>
+                <SelectItem value="cover_letter">Cover letter</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="date"
+              placeholder="From"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-[140px]"
+            />
+            <Input
+              type="date"
+              placeholder="To"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-[140px]"
+            />
+            {(search || filterType !== "all" || dateFrom || dateTo) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearch("")
+                  setFilterType("all")
+                  setDateFrom("")
+                  setDateTo("")
+                }}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          <DocumentsTable
+            documents={filteredDocuments}
+            onAnalyzeComplete={handleAnalyzeComplete}
+            onDelete={handleDelete}
+          />
+        </>
       )}
     </div>
   )

@@ -60,6 +60,14 @@ export async function GET(
       created_at: string;
     } | undefined;
 
+    const ar = rewriteRow?.analysis_result as {
+      ats_score?: number;
+      jd_match?: number;
+      keyword_gap?: string[];
+      keyword_matched?: string[];
+      cv_checklist?: { item: string; passed: boolean; tip?: string }[];
+      stronger_verbs?: { original: string; suggested: string }[];
+    } | undefined;
     const analysis = rewriteRow?.analysis_result
       ? {
           score: docRow.score ?? 0,
@@ -72,6 +80,9 @@ export async function GET(
           ...(rewriteRow.analysis_result.ats_score != null && { ats_score: rewriteRow.analysis_result.ats_score }),
           ...(rewriteRow.analysis_result.jd_match != null && { jd_match: rewriteRow.analysis_result.jd_match }),
           ...(rewriteRow.analysis_result.keyword_gap != null && { keyword_gap: rewriteRow.analysis_result.keyword_gap }),
+          ...(ar?.keyword_matched != null && { keyword_matched: ar.keyword_matched }),
+          ...(ar?.cv_checklist != null && { cv_checklist: ar.cv_checklist }),
+          ...(ar?.stronger_verbs != null && { stronger_verbs: ar.stronger_verbs }),
         }
       : null;
 

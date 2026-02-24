@@ -48,6 +48,7 @@ export type Document = {
   score: number | null
   status: "uploaded" | "analyzing" | "analyzed"
   date: string
+  createdAt?: string
   rewriteId?: string | null
   extractedText?: string
   analysis?: AnalysisData
@@ -58,6 +59,7 @@ const TYPE_LABELS: Record<string, string> = {
   legal: "Legal",
   academic: "Academic",
   business: "Business",
+  cover_letter: "Cover letter",
 }
 
 function ScoreBadge({ score }: { score: number | null }) {
@@ -120,6 +122,9 @@ export function DocumentsTable({
         ...(data.ats_score != null && { ats_score: data.ats_score }),
         ...(data.jd_match != null && { jd_match: data.jd_match }),
         ...(data.keyword_gap != null && { keyword_gap: data.keyword_gap }),
+        ...(data.keyword_matched != null && { keyword_matched: data.keyword_matched }),
+        ...(data.cv_checklist != null && { cv_checklist: data.cv_checklist }),
+        ...(data.stronger_verbs != null && { stronger_verbs: data.stronger_verbs }),
       }
       onAnalyzeComplete(doc.id, data.rewriteId, data.score ?? 0, analysisData)
       track("analyze_complete", { docType: doc.docType })
@@ -322,13 +327,15 @@ export function DocumentsTable({
                                   View full page
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => (doc.docType === "cv" ? setCvAnalyzeDialog({ doc, jobDescription: "" }) : runAnalyze(doc))}
-                                disabled={isAnalyzing}
-                              >
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Re-analyze
-                              </DropdownMenuItem>
+                              {doc.docType !== "cover_letter" && (
+                                <DropdownMenuItem
+                                  onClick={() => (doc.docType === "cv" ? setCvAnalyzeDialog({ doc, jobDescription: "" }) : runAnalyze(doc))}
+                                  disabled={isAnalyzing}
+                                >
+                                  <RefreshCw className="mr-2 h-4 w-4" />
+                                  Re-analyze
+                                </DropdownMenuItem>
+                              )}
                             </>
                           )}
                           {doc.status !== "analyzed" && (

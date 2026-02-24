@@ -54,6 +54,7 @@ export async function GET() {
         day: 'numeric',
         year: 'numeric',
       }),
+      createdAt: doc.created_at,
       rewriteId: latestRewrite[doc.id] ?? null,
     }));
 
