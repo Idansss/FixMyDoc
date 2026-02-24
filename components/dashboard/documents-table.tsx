@@ -85,9 +85,9 @@ export function DocumentsTable({
 }) {
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [cvAnalyzeDialog, setCvAnalyzeDialog] = useState<{ doc: Document; jobDescription: string } | null>(null)
+  const [cvAnalyzeDialog, setCvAnalyzeDialog] = useState<{ doc: Document; jobDescription: string; industryOrRole: string } | null>(null)
 
-  const runAnalyze = async (doc: Document, jobDescription?: string | null) => {
+  const runAnalyze = async (doc: Document, jobDescription?: string | null, industryOrRole?: string | null) => {
     if (!doc.extractedText) {
       toast.error("Missing document text.")
       return
@@ -100,8 +100,9 @@ export function DocumentsTable({
         extractedText: doc.extractedText,
         docType: doc.docType,
       }
-      if (doc.docType === "cv" && jobDescription?.trim()) {
-        body.jobDescription = jobDescription.trim()
+      if (doc.docType === "cv") {
+        if (jobDescription?.trim()) body.jobDescription = jobDescription.trim()
+        if (industryOrRole?.trim()) body.industryOrRole = industryOrRole.trim()
       }
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -138,7 +139,7 @@ export function DocumentsTable({
 
   const handleAnalyze = (doc: Document) => {
     if (doc.docType === "cv") {
-      setCvAnalyzeDialog({ doc, jobDescription: "" })
+      setCvAnalyzeDialog({ doc, jobDescription: "", industryOrRole: "" })
       return
     }
     runAnalyze(doc)
@@ -377,24 +378,39 @@ export function DocumentsTable({
             </DialogHeader>
             {cvAnalyzeDialog && (
               <>
-                <div className="space-y-2">
-                  <label htmlFor="jd" className="text-sm font-medium text-foreground">
-                    Job description (optional)
-                  </label>
-                  <textarea
-                    id="jd"
-                    placeholder="Paste the job posting here…"
-                    value={cvAnalyzeDialog.jobDescription}
-                    onChange={(e) => setCvAnalyzeDialog({ ...cvAnalyzeDialog, jobDescription: e.target.value })}
-                    className="min-h-[120px] w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="jd" className="text-sm font-medium text-foreground">
+                      Job description (optional)
+                    </label>
+                    <textarea
+                      id="jd"
+                      placeholder="Paste the job posting here…"
+                      value={cvAnalyzeDialog.jobDescription}
+                      onChange={(e) => setCvAnalyzeDialog({ ...cvAnalyzeDialog, jobDescription: e.target.value })}
+                      className="min-h-[120px] w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="industry" className="text-sm font-medium text-foreground">
+                      Industry or target role (optional)
+                    </label>
+                    <input
+                      id="industry"
+                      type="text"
+                      placeholder="e.g. Software Engineer, Healthcare"
+                      value={cvAnalyzeDialog.industryOrRole}
+                      onChange={(e) => setCvAnalyzeDialog({ ...cvAnalyzeDialog, industryOrRole: e.target.value })}
+                      className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setCvAnalyzeDialog(null)}>
                     Cancel
                   </Button>
                   <Button
-                    onClick={() => runAnalyze(cvAnalyzeDialog.doc, cvAnalyzeDialog.jobDescription)}
+                    onClick={() => runAnalyze(cvAnalyzeDialog.doc, cvAnalyzeDialog.jobDescription, cvAnalyzeDialog.industryOrRole)}
                     disabled={analyzingId === cvAnalyzeDialog.doc.id}
                   >
                     {analyzingId === cvAnalyzeDialog.doc.id ? (

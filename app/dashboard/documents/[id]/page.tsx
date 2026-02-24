@@ -79,6 +79,7 @@ export default function DocumentDetailPage() {
   const [showCompare, setShowCompare] = useState(false)
   const [reAnalyzeDialog, setReAnalyzeDialog] = useState(false)
   const [reAnalyzeJd, setReAnalyzeJd] = useState("")
+  const [reAnalyzeIndustry, setReAnalyzeIndustry] = useState("")
   const [reAnalyzing, setReAnalyzing] = useState(false)
   const [data, setData] = useState<{
     document: { id: string; filename: string; docType: string; score: number | null; date: string; extractedText?: string }
@@ -245,6 +246,7 @@ export default function DocumentDetailPage() {
           extractedText: extracted,
           docType: "cv",
           jobDescription: reAnalyzeJd.trim() || null,
+          industryOrRole: reAnalyzeIndustry.trim() || null,
         }),
       })
       const out = await res.json().catch(() => ({}))
@@ -255,6 +257,7 @@ export default function DocumentDetailPage() {
       toast.success("Re-analyzed with new job description.")
       setReAnalyzeDialog(false)
       setReAnalyzeJd("")
+      setReAnalyzeIndustry("")
       const refetch = await fetch(`/api/documents/${docId}`)
       if (refetch.ok) {
         const d = await refetch.json()
@@ -671,17 +674,32 @@ export default function DocumentDetailPage() {
                   Paste a different job description to get a new ATS score, JD match %, and keyword gap. This will create a new analysis and keep the previous one in history.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-2">
-                <label htmlFor="reanalyze-jd" className="text-sm font-medium text-foreground">
-                  Job description
-                </label>
-                <textarea
-                  id="reanalyze-jd"
-                  placeholder="Paste the job posting here…"
-                  value={reAnalyzeJd}
-                  onChange={(e) => setReAnalyzeJd(e.target.value)}
-                  className="min-h-[120px] w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="reanalyze-jd" className="text-sm font-medium text-foreground">
+                    Job description
+                  </label>
+                  <textarea
+                    id="reanalyze-jd"
+                    placeholder="Paste the job posting here…"
+                    value={reAnalyzeJd}
+                    onChange={(e) => setReAnalyzeJd(e.target.value)}
+                    className="min-h-[120px] w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="reanalyze-industry" className="text-sm font-medium text-foreground">
+                    Industry or target role (optional)
+                  </label>
+                  <input
+                    id="reanalyze-industry"
+                    type="text"
+                    placeholder="e.g. Software Engineer, Healthcare"
+                    value={reAnalyzeIndustry}
+                    onChange={(e) => setReAnalyzeIndustry(e.target.value)}
+                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setReAnalyzeDialog(false)}>

@@ -12,8 +12,10 @@ export interface AnalyzeBody {
   documentId: string;
   extractedText: string;
   docType: DocType;
-  /** Optional job description for CV/resume ATS mode. When set, response includes ats_score, jd_match, keyword_gap. */
+  /** Optional job description for CV/resume ATS mode. When set, response includes ats_score, jd_match, keyword_gap, keyword_matched. */
   jobDescription?: string | null;
+  /** Optional industry or target role (e.g. "Software Engineer", "Healthcare") to tailor CV suggestions. */
+  industryOrRole?: string | null;
 }
 
 export interface AnalysisResult {
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as AnalyzeBody;
-    let { documentId, extractedText, docType, jobDescription } = body;
+    let { documentId, extractedText, docType, jobDescription, industryOrRole } = body;
     if (!documentId || !docType) {
       return NextResponse.json(
         { error: 'Missing documentId or docType' },
@@ -126,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     const anthropic = new Anthropic();
-    const systemPrompt = getSystemPrompt(docType, jobDescription);
+    const systemPrompt = getSystemPrompt(docType, jobDescription, industryOrRole);
     const docPayload =
       docType === 'cv' && jobDescription && jobDescription.trim()
         ? `Job description (use for ATS/jd_match/keyword_gap):\n${jobDescription.slice(0, 15000)}\n\nResume/Document:\n${extractedText.slice(0, 85000)}`

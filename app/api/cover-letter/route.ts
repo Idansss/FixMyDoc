@@ -12,9 +12,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { resumeText, jobDescription } = body as {
+    const { resumeText, jobDescription, length, tone } = body as {
       resumeText?: string;
       jobDescription?: string;
+      length?: 'short' | 'medium' | 'long';
+      tone?: 'professional' | 'friendly' | 'formal';
     };
 
     if (!resumeText?.trim() || !jobDescription?.trim()) {
@@ -24,18 +26,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const lengthGuide =
+      length === 'short'
+        ? 'Keep it concise: 150–220 words, 3–4 short paragraphs. Get to the point quickly.'
+        : length === 'long'
+          ? 'Use a full page: 400–500 words, 5–6 paragraphs. Expand on 2–3 achievements and show deep fit.'
+          : 'Standard one-page length: 250–380 words, 4–5 paragraphs.';
+
+    const toneGuide =
+      tone === 'friendly'
+        ? 'Tone: warm and approachable but still professional. Slightly conversational.'
+        : tone === 'formal'
+          ? 'Tone: formal and traditional. Use formal phrasing, avoid contractions.'
+          : 'Tone: professional and confident. Polished but not stiff.';
+
     const anthropic = new Anthropic();
     const { content } = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 2048,
-      system: `You are an expert career coach. Write a professional, tailored cover letter that:
+      system: `You are an expert career coach. Write a tailored cover letter that:
 - Addresses the hiring manager (use "Hiring Manager" or "Dear Hiring Team" if no name given)
 - Opens with a strong hook that ties the candidate's background to the role
 - Highlights 2–3 relevant achievements or skills from the resume that match the job description
 - Uses keywords from the job description naturally
-- Keeps a confident but not arrogant tone
 - Ends with a clear call to action and sign-off
-- Is suitable for a single page (about 250–400 words)
+${lengthGuide}
+${toneGuide}
 Output only the cover letter text, no meta commentary.`,
       messages: [
         {

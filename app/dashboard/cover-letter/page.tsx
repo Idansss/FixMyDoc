@@ -2,6 +2,13 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Download, Loader2, Copy, Check, Save } from "lucide-react"
 import { toast } from "sonner"
 import { track } from "@/lib/analytics"
@@ -10,6 +17,8 @@ export default function CoverLetterPage() {
   const [resumeText, setResumeText] = useState("")
   const [jobDescription, setJobDescription] = useState("")
   const [coverLetter, setCoverLetter] = useState("")
+  const [length, setLength] = useState<"short" | "medium" | "long">("medium")
+  const [tone, setTone] = useState<"professional" | "friendly" | "formal">("professional")
   const [generating, setGenerating] = useState(false)
   const [exportLoading, setExportLoading] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -30,6 +39,8 @@ export default function CoverLetterPage() {
         body: JSON.stringify({
           resumeText: resumeText.trim(),
           jobDescription: jobDescription.trim(),
+          length,
+          tone,
         }),
       })
       const data = await res.json()
@@ -155,6 +166,34 @@ export default function CoverLetterPage() {
               placeholder="Paste the job posting here…"
               className="min-h-[200px] w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Length</label>
+              <Select value={length} onValueChange={(v) => setLength(v as "short" | "medium" | "long")}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short">Short (3–4 paragraphs)</SelectItem>
+                  <SelectItem value="medium">Medium (4–5 paragraphs)</SelectItem>
+                  <SelectItem value="long">Long (full page)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Tone</label>
+              <Select value={tone} onValueChange={(v) => setTone(v as "professional" | "friendly" | "formal")}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="friendly">Friendly</SelectItem>
+                  <SelectItem value="formal">Formal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <Button
             onClick={handleGenerate}
