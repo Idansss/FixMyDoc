@@ -35,15 +35,6 @@ const proposalStyles = StyleSheet.create({
   text: { lineHeight: 1.5, marginBottom: 8, textAlign: 'left' },
 });
 
-function getStyles(template: ExportTemplate) {
-  switch (template) {
-    case 'cv': return cvStyles;
-    case 'academic': return academicStyles;
-    case 'proposal': return proposalStyles;
-    default: return plainStyles;
-  }
-}
-
 /** Heuristic: treat short ALL-CAPS or lines ending with colon as section headers for styled templates. */
 function isLikelyHeading(line: string): boolean {
   const t = line.trim();
@@ -55,7 +46,6 @@ function isLikelyHeading(line: string): boolean {
 
 function PdfContent({ text, template }: { text: string; template: ExportTemplate }) {
   const raw = text || 'No content.';
-  const styles = getStyles(template);
   const paragraphs = raw.split(/\n\n+/).filter(Boolean);
 
   if (template === 'plain') {
@@ -72,15 +62,17 @@ function PdfContent({ text, template }: { text: string; template: ExportTemplate
     );
   }
 
+  const styledStyles =
+    template === 'cv' ? cvStyles : template === 'academic' ? academicStyles : proposalStyles;
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styledStyles.page}>
         <View>
           {paragraphs.map((p, i) => {
             const heading = isLikelyHeading(p);
             return (
-              <View key={i} style={styles.section}>
-                <Text style={heading ? styles.heading : styles.text}>{p}</Text>
+              <View key={i} style={styledStyles.section}>
+                <Text style={heading ? styledStyles.heading : styledStyles.text}>{p}</Text>
               </View>
             );
           })}
