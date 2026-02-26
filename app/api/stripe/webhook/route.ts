@@ -4,6 +4,8 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email';
 import { getStripe } from '@/lib/stripe';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

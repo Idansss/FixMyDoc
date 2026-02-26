@@ -6,6 +6,8 @@ import { getSystemPrompt, type DocType } from '@/lib/analysis/system-prompt';
 import { ratelimit } from '@/lib/ratelimit';
 import { sendEmail } from '@/lib/email';
 
+export const dynamic = 'force-dynamic';
+
 const MODEL = 'claude-sonnet-4-20250514';
 
 export interface AnalyzeBody {

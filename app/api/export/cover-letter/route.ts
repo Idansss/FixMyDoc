@@ -4,6 +4,8 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { getFixedTextPdfBuffer } from '@/lib/export/pdf';
 import { getFixedTextDocxBuffer } from '@/lib/export/docx';
 
+export const dynamic = 'force-dynamic';
+
 const BRANDED_FOOTER = '\n\n— Created with FixMyDoc';
 
 export async function POST(req: NextRequest) {

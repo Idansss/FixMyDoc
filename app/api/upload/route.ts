@@ -4,6 +4,8 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { ratelimit } from '@/lib/ratelimit';
 import { ocrFromImageBuffer, ocrFromPdfBuffer, PDF_OCR_TEXT_THRESHOLD } from '@/lib/ocr';
 
+export const dynamic = 'force-dynamic';
+
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
   'application/pdf',

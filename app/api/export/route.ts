@@ -5,6 +5,8 @@ import { getFixedTextPdfBuffer } from '@/lib/export/pdf';
 import { getFixedTextDocxBuffer } from '@/lib/export/docx';
 import { templateForDocType, type ExportTemplate } from '@/lib/export/templates';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();

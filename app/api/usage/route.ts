@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { supabaseServer } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 const FREE_DAILY_LIMIT = 1;
 
 function isToday(isoDate: string | null): boolean {

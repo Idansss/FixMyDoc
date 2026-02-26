@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server';
 import { supabaseServer } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();

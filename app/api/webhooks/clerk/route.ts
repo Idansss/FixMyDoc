@@ -3,6 +3,8 @@ import { Webhook } from 'svix';
 import { supabaseServer } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email';
 
+export const dynamic = 'force-dynamic';
+
 const clerkWebhookSecret = process.env.CLERK_WEBHOOK_SECRET;
 
 export async function POST(req: NextRequest) {
