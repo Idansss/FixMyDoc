@@ -330,7 +330,7 @@ export function DocumentsTable({
                               </DropdownMenuItem>
                               {doc.docType !== "cover_letter" && (
                                 <DropdownMenuItem
-                                  onClick={() => (doc.docType === "cv" ? setCvAnalyzeDialog({ doc, jobDescription: "" }) : runAnalyze(doc))}
+                                  onClick={() => (doc.docType === "cv" ? setCvAnalyzeDialog({ doc, jobDescription: "", industryOrRole: "" }) : runAnalyze(doc))}
                                   disabled={isAnalyzing}
                                 >
                                   <RefreshCw className="mr-2 h-4 w-4" />
